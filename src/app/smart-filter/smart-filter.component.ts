@@ -91,9 +91,13 @@ export class SmartFilterComponent {
       value: [''],
       values: this._formBuilder.array([]),
     });
-    filter.get("filterOperator")?.valueChanges.subscribe(() =>{
+    filter.get("displayName")?.valueChanges.subscribe(() =>{
       filter.get("value")?.setValue("");
+      filter.get("filterOperator")?.setValue("");
     })
+   /* filter.get("filterOperator")?.valueChanges.subscribe(() =>{
+      filter.get("value")?.setValue("");
+    })*/
     this.filters.push(filter);
   }
 
