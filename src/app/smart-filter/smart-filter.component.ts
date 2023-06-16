@@ -35,8 +35,16 @@ export class SmartFilterComponent {
     private _formBuilder: FormBuilder,
   ) {}
 
+  
+
   ngOnInit() {
 
+    this.filters.controls.forEach(element =>{
+      console.log("valor")
+      element.get("value")?.valueChanges.subscribe(value =>{
+        console.log(value);
+      })
+    })
     this.range = new FormGroup({
       start: new FormControl(),
       end: new FormControl()
@@ -83,6 +91,9 @@ export class SmartFilterComponent {
       value: [''],
       values: this._formBuilder.array([]),
     });
+    filter.get("filterOperator")?.valueChanges.subscribe(() =>{
+      filter.get("value")?.setValue("");
+    })
     this.filters.push(filter);
   }
 
