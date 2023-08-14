@@ -1,0 +1,154 @@
+<div class="p-6">
+    <div [formGroup]="filterForm">
+  
+      <ng-container formArrayName="filters">
+  
+        <ng-container *ngFor="let filterControl of filters.controls; let i = index">
+          <div class="flex gap-4" [formGroupName]="i">
+  
+            <mat-form-field>
+              <mat-label for="">Nombre: </mat-label>
+              <mat-select formControlName="filterSelected" (selectionChange)="filterSelectedChange($event.value, i)">
+                <mat-option>--</mat-option>
+                <ng-container *ngFor="let field of fields">
+                  <mat-option [value]="field" [disabled]="!field.available"> 
+                    {{field.displayName}}
+                  </mat-option>
+                </ng-container>
+              </mat-select>
+              <mat-error *ngIf="filterControl.get('filterSelected')?.hasError('required')">Selecciona una opción</mat-error>
+            </mat-form-field>
+  
+            <mat-form-field>
+              <mat-label for="">Opción de búsqueda: </mat-label>
+              <mat-select formControlName="selectedSearchOption" (selectionChange)="searchOptionSelectedChange(i)" placeholder="Select">
+                <mat-option *ngFor="let option of filterControl.get('searchOptions')?.value" [value]="option.key">
+                  {{option.name}}
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="filterControl.get('selectedSearchOption')?.hasError('required')">Selecciona una opción</mat-error>
+            </mat-form-field>
+  
+            <!-- HTML element according field type -->
+            <ng-container [ngSwitch]="filterControl.get('dataType')?.value">
+              <div *ngSwitchCase="'text'">
+                <mat-form-field>
+                  <mat-label>Valor</mat-label>
+                  <input type="text" matInput formControlName="value" (change)="setInputValue($event, i, 'text')">
+                  <mat-error *ngIf="filterControl.get('value')?.hasError('required')">Campo requerido</mat-error>
+                </mat-form-field>
+              </div>
+              <div *ngSwitchCase="'number'" class="flex gap-4">
+                <mat-form-field>
+                  <mat-label>Valor</mat-label>
+                  <input type="number" matInput formControlName="value" (change)="setInputValue($event, i, 'number')">
+                  <mat-error *ngIf="filterControl.get('value')?.hasError('required')" >Campo requerido</mat-error>
+                </mat-form-field>
+                <span *ngIf="filterControl.get('selectedSearchOption')?.value === 'btwn'">
+                  <mat-form-field>
+                    <mat-label>2do valor</mat-label>
+                    <input type="number" matInput formControlName="additionalValue" (change)="setSecondInputValue($event, i, 'number')">
+                    <mat-error *ngIf="filterControl.get('additionalValue')?.hasError('required')">Campo requerido</mat-error>
+                  </mat-form-field>
+                </span>
+              </div>
+              <div *ngSwitchCase="'date'">
+                <mat-form-field *ngIf="filterControl.get('selectedSearchOption')?.value !== 'btwn'">
+                  <mat-label>Fecha</mat-label>
+                  <input matInput 
+                  [matDatepicker]="picker" 
+                  readonly="true" 
+                  formControlName="value"
+                  (dateChange)="setDateValue($event, i, filterControl.get('selectedSearchOption')?.value)"
+                  >
+                  <mat-error *ngIf="filterControl.get('additionalValue')?.hasError('required')">Selecciona una fecha</mat-error>
+                  <mat-hint>DD/MM/YYYY</mat-hint>
+                  <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-datepicker #picker></mat-datepicker>
+                </mat-form-field>
+                <mat-form-field *ngIf="filterControl.get('selectedSearchOption')?.value === 'btwn'">
+                  <mat-label>Rango de fechas</mat-label>
+                  <mat-date-range-input [formGroup]="range" [rangePicker]="picker">
+                    <input matStartDate formControlName="start" placeholder="Start date"
+                      (dateInput)="setDateValue($event, i, 'entre', 'start')">
+                    <input matEndDate formControlName="end" placeholder="End date" (dateInput)="setDateValue($event, i, 'entre', 'end')">
+                  </mat-date-range-input>
+                  <mat-hint>DD/MM/YYYY – DD/MM/YYYY</mat-hint>
+                  <mat-datepicker-toggle matIconSuffix [for]="picker"></mat-datepicker-toggle>
+                  <mat-date-range-picker #picker></mat-date-range-picker>
+                </mat-form-field>
+              </div>
+              <div *ngSwitchCase="'dropdown'">
+                <mat-form-field>
+                  <mat-label>Valor</mat-label>
+                  <mat-select formControlName="value" (selectionChange)="setDropdownElementChange($event.value, i, 'dropdown')" multiple>
+                    <mat-option 
+                    *ngFor="let option of filterControl.get('optionList')?.value let i = index"
+                    [value]="option"
+                    >{{option}}</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="filterControl.get('value')?.hasError('required')" >Selecciona al menos una opción</mat-error>
+                </mat-form-field>
+              </div>
+              <div *ngSwitchCase="'checklist'" class="flex gap-4">
+                <mat-form-field>
+                  <mat-label>Tipo de Selección</mat-label>
+                  <mat-select formControlName="booleanOption" (selectionChange)="changeOptionSelect($event.value, i)">
+                    <mat-option [value]="true">true</mat-option>
+                    <mat-option [value]="false">false</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="filterControl.get('booleanOption')?.hasError('required')" >Selecciona al menos una opción</mat-error>
+                </mat-form-field>
+                <mat-form-field>
+                  <mat-label>Valor</mat-label>
+                  <mat-select formControlName="value" (selectionChange)="setCheckListElementChange($event.value, i, 'checklist')" multiple>
+                    <mat-option *ngFor="let option of filterControl.get('optionList')?.value let i = index" [value]="option">
+                      {{option}}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="filterControl.get('value')?.hasError('required')" >Selecciona al menos una opción</mat-error>
+                </mat-form-field>
+              </div>
+              <div *ngSwitchCase="'multi-dropdown'">
+                <mat-form-field>
+                  <mat-label>Valores</mat-label>
+                  <mat-select formControlName="value" multiple>
+                    <mat-option *ngFor="let option of filterControl.get('optionList')?.value"
+                      [value]="option._id">{{option.displayName}}</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="filterControl.get('additionalValue')?.hasError('required')">Selecciona al menos una opción</mat-error>
+                </mat-form-field>
+              </div>
+              <div *ngSwitchCase="'composite-dropdown'">
+                <mat-form-field>
+                  <mat-label>Valor</mat-label>
+                  <mat-select formControlName="value">
+                    <mat-option *ngFor="let option of filterControl.get('optionList')?.value let i = index"
+                      [value]="option._id">{{option.displayName}}</mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="filterControl.get('value')?.hasError('required')" >Selecciona al menos una opción</mat-error>
+                </mat-form-field>
+              </div>
+              <div *ngSwitchCase="'boolean'">
+                  <mat-slide-toggle formControlName="value" (change)="setToggleValue($event, i)">Falso / Verdadero</mat-slide-toggle>
+              </div>
+  
+              <div *ngSwitchDefault>
+                <!-- Unsupported field type -->
+              </div>
+            </ng-container>
+  
+            <mat-icon class="delete-btn" (click)="deleteFilter(i)">
+              delete_forever</mat-icon>
+          </div>
+        </ng-container>
+      </ng-container>
+  
+    </div>
+  
+    <button [type]="'button'" (click)="addFilter()">+ Agregar filtro</button>
+  </div>
+  
+  <div class="mt-10 p-6">
+    <button class="border border-gray-300 px-2 py-2" [type]="'button'" (click)="filter()">Aplicar filtro</button>
+  </div>
